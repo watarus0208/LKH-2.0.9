@@ -25,19 +25,23 @@ GainType FindTour()
     int i;
     double EntryTime = GetTime();
 
+    /*Initialize All of OldPred, OldSuc, NextBestSuc, BestSuc*/
     t = FirstNode;
     do
         t->OldPred = t->OldSuc = t->NextBestSuc = t->BestSuc = 0;
     while ((t = t->Suc) != FirstNode);
+
+    /*Calcurate Initial Distance*/
     if (Run == 1 && Dimension == DimensionSaved) {
         OrdinalTourCost = 0;
         for (i = 1; i < Dimension; i++)
-            OrdinalTourCost += C(&NodeSet[i], &NodeSet[i + 1])
-                - NodeSet[i].Pi - NodeSet[i + 1].Pi;
-        OrdinalTourCost += C(&NodeSet[Dimension], &NodeSet[1])
-            - NodeSet[Dimension].Pi - NodeSet[1].Pi;
+            /*ToDo: add prime constraint*/
+            OrdinalTourCost += C(&NodeSet[i], &NodeSet[i + 1]) - NodeSet[i].Pi - NodeSet[i + 1].Pi;
+        OrdinalTourCost += C(&NodeSet[Dimension], &NodeSet[1]) - NodeSet[Dimension].Pi - NodeSet[1].Pi;
+        /*Precision = 100 default*/
         OrdinalTourCost /= Precision;
     }
+
     BetterCost = PLUS_INFINITY;
     if (MaxTrials > 0)
         HashInitialize(HTable);
@@ -52,28 +56,40 @@ GainType FindTour()
                 printff("*** Time limit exceeded ***\n");
             break;
         }
+
         /* Choose FirstNode at random */
         if (Dimension == DimensionSaved)
+            /* ToDo:We Should Not Set FirstNode Random*/
+            /* Here We Should Deciede FirstNode*/
             FirstNode = &NodeSet[1 + Random() % Dimension];
         else
             for (i = Random() % Dimension; i > 0; i--)
                 FirstNode = FirstNode->Suc;
+
         ChooseInitialTour();
+
+        /* LinKernighan */
+        /* Here Is Calculating The Cost*/
         Cost = LinKernighan();
+
+
         if (FirstNode->BestSuc) {
             /* Merge tour with current best tour */
             t = FirstNode;
             while ((t = t->Next = t->BestSuc) != FirstNode);
             Cost = MergeWithTour();
         }
-        if (Dimension == DimensionSaved && Cost >= OrdinalTourCost &&
-            BetterCost > OrdinalTourCost) {
+
+
+        if (Dimension == DimensionSaved && Cost >= OrdinalTourCost && BetterCost > OrdinalTourCost) {
             /* Merge tour with ordinal tour */
             for (i = 1; i < Dimension; i++)
                 NodeSet[i].Next = &NodeSet[i + 1];
             NodeSet[Dimension].Next = &NodeSet[1];
             Cost = MergeWithTour();
         }
+
+
         if (Cost < BetterCost) {
             if (TraceLevel >= 1) {
                 printff("* %d: Cost = " GainFormat, Trial, Cost);
@@ -96,6 +112,7 @@ GainType FindTour()
         } else if (TraceLevel >= 2)
             printff("  %d: Cost = " GainFormat ", Time = %0.2f sec.\n",
                     Trial, Cost, fabs(GetTime() - EntryTime));
+
         /* Record backbones if wanted */
         if (Trial <= BackboneTrials && BackboneTrials < MaxTrials) {
             SwapCandidateSets();
@@ -109,6 +126,7 @@ GainType FindTour()
                 SwapCandidateSets();
         }
     }
+
     if (BackboneTrials > 0 && BackboneTrials < MaxTrials) {
         if (Trial > BackboneTrials ||
             (Trial == BackboneTrials &&
@@ -120,6 +138,7 @@ GainType FindTour()
             t->BackboneCandidateSet = 0;
         } while ((t = t->Suc) != FirstNode);
     }
+
     t = FirstNode;
     if (Norm == 0) {
         do
@@ -131,6 +150,7 @@ GainType FindTour()
         (t->Suc = t->BestSuc)->Pred = t;
         Hash ^= Rand[t->Id] * Rand[t->Suc->Id];
     } while ((t = t->BestSuc) != FirstNode);
+
     if (Trial > MaxTrials)
         Trial = MaxTrials;
     ResetCandidateSet();

@@ -2,10 +2,10 @@ TREE_TYPE = TWO_LEVEL_TREE
 # TREE_TYPE = THREE_LEVEL_TREE
 # TREE_TYPE = ONE_LEVEL_TREE
 
-# CC = gcc
+CC = gcc
 IDIR = INCLUDE
 ODIR = OBJ
-CFLAGS = -O3 -Wall -I$(IDIR) -D$(TREE_TYPE) -g
+CFLAGS = -O0 -Wall -I$(IDIR) -D$(TREE_TYPE) -g -DDEBUG
 
 _DEPS = Delaunay.h GainType.h Genetic.h GeoConversion.h Hashing.h      \
         Heap.h LKH.h Segment.h Sequence.h gpx.h

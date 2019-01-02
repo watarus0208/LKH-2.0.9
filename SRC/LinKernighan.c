@@ -30,6 +30,7 @@ GainType LinKernighan()
         S->First = S->Last = 0;
     }
     while ((S = S->Suc) != FirstSegment);
+
     SS = FirstSSegment;
     i = 0;
     do {
@@ -51,25 +52,45 @@ GainType LinKernighan()
     Hash = 0;
     i = 0;
     t1 = FirstNode;
+
+
+    /* Set t1 As The Next of t1 And Loop Until It Becomes FirstNode */
     do {
         t2 = t1->OldSuc = t1->Suc;
         t1->OldPred = t1->Pred;
         t1->Rank = ++i;
+
+        /* Computing Cost */
+        /* ToDo: Add Prime Constraint To C(t1, t2) */
         Cost += (t1->SucCost = t2->PredCost = C(t1, t2)) - t1->Pi - t2->Pi;
+
         Hash ^= Rand[t1->Id] * Rand[t2->Id];
         t1->Cost = INT_MAX;
+
+        /* Among CandidateSet Choose One Edge As Nt1*/
+        /* If It Has Better Cost, Change The t1 To Nt1 */
         for (Nt1 = t1->CandidateSet; (t2 = Nt1->To); Nt1++)
+            /*ToDo: Add Prime Constraint To "Nt1->Cost < t1->Cost" */
             if (t2 != t1->Pred && t2 != t1->Suc && Nt1->Cost < t1->Cost)
                 t1->Cost = Nt1->Cost;
+
+        /* S is t1's parent */
         t1->Parent = S;
         S->Size++;
+
+        /* When S Is Created First Time */
         if (S->Size == 1)
             S->First = t1;
         S->Last = t1;
+
+        /* When SS Is Created First Time */
         if (SS->Size == 0)
             SS->First = S;
+
+        /* SS is S's parent */
         S->Parent = SS;
         SS->Last = S;
+
         if (S->Size == GroupSize) {
             S = S->Suc;
             SS->Size++;
@@ -78,14 +99,16 @@ GainType LinKernighan()
         }
         t1->OldPredExcluded = t1->OldSucExcluded = 0;
         t1->Next = 0;
-        if (KickType == 0 || Kicks == 0 || Trial == 1 ||
-            !InBestTour(t1, t1->Pred) || !InBestTour(t1, t1->Suc))
+
+        if (KickType == 0 || Kicks == 0 || Trial == 1 || !InBestTour(t1, t1->Pred) || !InBestTour(t1, t1->Suc))
             Activate(t1);
     }
     while ((t1 = t1->Suc) != FirstNode);
+
     if (S->Size < GroupSize)
         SS->Size++;
     Cost /= Precision;
+
     if (TraceLevel >= 3 || (TraceLevel == 2 && Cost < BetterCost)) {
         printff("Cost = " GainFormat, Cost);
         if (Optimum != MINUS_INFINITY && Optimum != 0)
@@ -94,6 +117,7 @@ GainType LinKernighan()
                 Cost < Optimum ? "<" : Cost == Optimum ? "=" : "");
     }
     PredSucCostAvailable = 1;
+
 
     /* Loop as long as improvements are found */
     do {
@@ -106,6 +130,7 @@ GainType LinKernighan()
                         Dimension >= 10000 ? 1000 : 100) == 0)
                 printff("#%d: Time = %0.2f sec.\n",
                         it, fabs(GetTime() - EntryTime));
+
             /* Choose t2 as one of t1's two neighbors on the tour */
             for (X2 = 1; X2 <= 2; X2++) {
                 t2 = X2 == 1 ? PRED(t1) : SUCt1;
@@ -129,6 +154,7 @@ GainType LinKernighan()
 #else
                     assert(fmod(Gain, Precision) == 0);
 #endif
+
                     Cost -= Gain / Precision;
                     if (TraceLevel >= 3 ||
                         (TraceLevel == 2 && Cost < BetterCost)) {

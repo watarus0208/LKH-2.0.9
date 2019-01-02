@@ -79,8 +79,7 @@ void ChooseInitialTour()
         N += DimensionSaved;
     FirstNode = N;
 
-    /* Move nodes with two incident fixed or common candidate edges in
-       front of FirstNode */
+    /* Move nodes with two incident fixed or common candidate edges in front of FirstNode */
     for (Last = FirstNode->Pred; N != Last; N = NextN) {
         NextN = N->Suc;
         if (FixedOrCommonCandidates(N) == 2)

@@ -47,6 +47,7 @@
  * ATT          Special distance function for problem att48 and att532
  * CEIL_2D      Weights are Euclidean distances in 2-D rounded up
  * CEIL_3D      Weights are Euclidean distances in 3-D rounded up
+ * ２次元ユークリッドなのでこれを使う
  * EUC_2D       Weights are Euclidean distances in 2-D
  * EUC_3D       Weights are Euclidean distances in 3-D
  * EXPLICIT     Weights are listed explicitly in the corresponding section
@@ -239,15 +240,21 @@ void ReadProblem()
         printff("Reading PROBLEM_FILE: \"%s\" ... ", ProblemFileName);
     FreeStructures();
     FirstNode = 0;
+
+    /*WeightType Initialized*/
     WeightType = WeightFormat = ProblemType = -1;
+
     CoordType = NO_COORDS;
     Name = Copy("Unnamed");
     Type = EdgeWeightType = EdgeWeightFormat = 0;
     EdgeDataFormat = NodeCoordType = DisplayDataType = 0;
+
+    /*Distance Initialized*/
     Distance = 0;
     GridSize = 1000000.0;
     C = 0;
     c = 0;
+
     while ((Line = ReadLine(ProblemFile))) {
         if (!(Keyword = strtok(Line, Delimiters)))
             continue;
@@ -259,6 +266,7 @@ void ReadProblem()
         else if (!strcmp(Keyword, "DEPOT_SECTION"))
             eprintf("Not implemented: %s", Keyword);
         else if (!strcmp(Keyword, "DIMENSION"))
+            /*DIMENSION : 2392*/
             Read_DIMENSION();
         else if (!strcmp(Keyword, "DISPLAY_DATA_SECTION"))
             Read_DISPLAY_DATA_SECTION();
@@ -274,6 +282,11 @@ void ReadProblem()
             Read_EDGE_WEIGHT_SECTION();
         else if (!strcmp(Keyword, "EDGE_WEIGHT_TYPE"))
             Read_EDGE_WEIGHT_TYPE();
+            /*Settign Below Variables    */
+            /*WeightType = EUC_2D;       */
+            /*Distance = Distance_EUC_2D;*/
+            /*c = c_EUC_2D;              */
+            /*CoordType = TWOD_COORDS;   */
         else if (!strcmp(Keyword, "EOF"))
             break;
         else if (!strcmp(Keyword, "FIXED_EDGES_SECTION"))
@@ -284,6 +297,7 @@ void ReadProblem()
             Read_NAME();
         else if (!strcmp(Keyword, "NODE_COORD_SECTION"))
             Read_NODE_COORD_SECTION();
+            /*Make Nodes*/
         else if (!strcmp(Keyword, "NODE_COORD_TYPE"))
             Read_NODE_COORD_TYPE();
         else if (!strcmp(Keyword, "TOUR_SECTION"))
@@ -332,17 +346,19 @@ void ReadProblem()
         POPMUSIC_MaxNeighbors = Dimension - 1;
     if (POPMUSIC_SampleSize > Dimension)
         POPMUSIC_SampleSize = Dimension;
+
     if (CostMatrix == 0 && Dimension <= MaxMatrixDimension &&
         Distance != 0 && Distance != Distance_1 && Distance != Distance_LARGE &&
         Distance != Distance_ATSP && Distance != Distance_SPECIAL) {
         Node *Ni, *Nj;
-        assert(CostMatrix =
-               (int *) calloc((size_t) Dimension * (Dimension - 1) / 2,
-                              sizeof(int)));
+        assert(CostMatrix = (int *) calloc((size_t) Dimension * (Dimension - 1) / 2, sizeof(int)));
         Ni = FirstNode->Suc;
         do {
             Ni->C =
                 &CostMatrix[(size_t) (Ni->Id - 1) * (Ni->Id - 2) / 2] - 1;
+
+            /*ProblemType is maybe TSP*/
+            /*Each Distance is calculated and set in C array*/
             if (ProblemType != HPP || Ni->Id < Dimension)
                 for (Nj = FirstNode; Nj != Ni; Nj = Nj->Suc)
                     Ni->C[Nj->Id] = Fixed(Ni, Nj) ? 0 : Distance(Ni, Nj);
@@ -535,13 +551,16 @@ static void CreateNodes()
         if (Dimension > MaxMatrixDimension)
             eprintf("Dimension too large in HPP problem");
     }
+    /*Dimension+1*/
     assert(NodeSet = (Node *) calloc(Dimension + 1, sizeof(Node)));
     for (i = 1; i <= Dimension; i++, Prev = N) {
         N = &NodeSet[i];
         if (i == 1)
+            /*FirstNode is decided here*/
             FirstNode = N;
         else
             Link(Prev, N);
+        /*N->Id = 1 is FirstNode*/
         N->Id = i;
         if (MergeTourFiles >= 1)
             assert(N->MergeSuc =
@@ -958,11 +977,14 @@ static void Read_EDGE_WEIGHT_TYPE()
         Distance = Distance_CEIL_3D;
         c = c_CEIL_3D;
         CoordType = THREED_COORDS;
+
+    /*Distance is 2 Dimension Euclidean Distance*/
     } else if (!strcmp(EdgeWeightType, "EUC_2D")) {
         WeightType = EUC_2D;
         Distance = Distance_EUC_2D;
         c = c_EUC_2D;
         CoordType = TWOD_COORDS;
+
     } else if (!strcmp(EdgeWeightType, "EUC_3D")) {
         WeightType = EUC_3D;
         Distance = Distance_EUC_3D;
@@ -1104,20 +1126,21 @@ static void Read_NODE_COORD_SECTION()
     if (CoordType != TWOD_COORDS && CoordType != THREED_COORDS)
         eprintf("NODE_COORD_SECTION conflicts with NODE_COORD_TYPE: %s",
                 NodeCoordType);
-    if (!FirstNode)
+    if (!FirstNode)/*FirstNode=0*/
         CreateNodes();
-    N = FirstNode;
+    N = FirstNode;/*N=1*/
     do
-        N->V = 0;
+        N->V = 0;/*Initialize V:0*/
     while ((N = N->Suc) != FirstNode);
+
     if (ProblemType == HPP)
         Dimension--;
     for (i = 1; i <= Dimension; i++) {
         if (!fscanint(ProblemFile, &Id))
             eprintf("Missing nodes in NODE_COORD_SECTION");
         if (Id <= 0 || Id > Dimension)
-            eprintf("(NODE_COORD_SECTION) Node number out of range: %d",
-                    Id);
+            eprintf("(NODE_COORD_SECTION) Node number out of range: %d",Id);
+
         N = &NodeSet[Id];
         if (N->V == 1)
             eprintf("(NODE_COORD_SECTION) Node number occurs twice: %d",

@@ -17,6 +17,8 @@ int main(int argc, char *argv[])
     MaxMatrixDimension = 20000;
     MergeWithTour = Recombination == IPT ? MergeWithTourIPT :
         MergeWithTourGPX2;
+
+    /*Decide Distance etc. here*/
     ReadProblem();
 
     if (SubproblemSize > 0) {
@@ -36,7 +38,9 @@ int main(int argc, char *argv[])
             SolveTourSegmentSubproblems();
         return EXIT_SUCCESS;
     }
+    /* Setting SegmentSize */
     AllocateStructures();
+    /* Setting CandidateSet*/
     CreateCandidateSet();
     InitializeStatistics();
 
@@ -86,6 +90,7 @@ int main(int argc, char *argv[])
             }
         } else if (Run > 1)
             Cost = MergeTourWithBestTour();
+
         if (Cost < BestCost) {
             BestCost = Cost;
             RecordBetterTour();

@@ -16,7 +16,7 @@
  * The Minimum1TreeCost function is used to compute the cost of a minimum 
  * 1-tree.The Generatecandidates function is called in order to generate 
  * candidate sets. Minimum 1-trees are then computed in the corresponding 
- * sparse graph.         
+ * sparse graph.
  */
 
 GainType Ascent()
@@ -31,21 +31,21 @@ GainType Ascent()
     do
         t->Pi = t->BestPi = 0;
     while ((t = t->Suc) != FirstNode);
+
+
     if (CandidateSetType == DELAUNAY && !FirstNode->CandidateSet)
         CreateDelaunayCandidateSet();
+
     else if (CandidateSetType == POPMUSIC && !FirstNode->CandidateSet)
         Create_POPMUSIC_CandidateSet(AscentCandidates);
     else if (MaxCandidates == 0) {
         AddTourCandidates();
         if (ExtraCandidates > 0)
-            AddExtraCandidates(ExtraCandidates, ExtraCandidateSetType,
-                               ExtraCandidateSetSymmetric);
+            AddExtraCandidates(ExtraCandidates, ExtraCandidateSetType, ExtraCandidateSetSymmetric);
     }
 
     /* Compute the cost of a minimum 1-tree */
-    W = Minimum1TreeCost(CandidateSetType == DELAUNAY ||
-                         CandidateSetType == POPMUSIC ||
-                         MaxCandidates == 0);
+    W = Minimum1TreeCost(CandidateSetType == DELAUNAY || CandidateSetType == POPMUSIC || MaxCandidates == 0);
 
     /* Return this cost 
        if either
@@ -56,11 +56,11 @@ GainType Ascent()
     if (!Subgradient || !Norm)
         return W;
 
+
     if (MaxCandidates > 0) {
         /* Generate symmetric candididate sets for all nodes */
         MaxAlpha = INT_MAX;
-        if (Optimum != MINUS_INFINITY
-            && (Alpha = Optimum * Precision - W) >= 0)
+        if (Optimum != MINUS_INFINITY && (Alpha = Optimum * Precision - W) >= 0)
             MaxAlpha = Alpha;
         if (CandidateSetType != DELAUNAY && CandidateSetType != POPMUSIC)
             GenerateCandidates(AscentCandidates, MaxAlpha, 1);
@@ -88,15 +88,17 @@ GainType Ascent()
     BestW = W0 = W;
     BestNorm = Norm;
     InitialPhase = 1;
-    /* Perform subradient optimization with decreasing period length 
-       and decreasing step size */
+
+    /* Perform subradient optimization with decreasing period length and decreasing step size */
     for (Period = InitialPeriod, T = InitialStepSize * Precision;
          Period > 0 && T > 0 && Norm != 0; Period /= 2, T /= 2) {
+
         /* Period and step size are halved at each iteration */
         if (TraceLevel >= 2)
             printff
                 ("  T = %d, Period = %d, BestW = %0.1f, BestNorm = %d\n",
                  T, Period, (double) BestW / Precision, BestNorm);
+
         for (P = 1; T && P <= Period && Norm != 0; P++) {
             /* Adjust the Pi-values */
             t = FirstNode;
@@ -111,8 +113,10 @@ GainType Ascent()
                 t->LastV = t->V;
             }
             while ((t = t->Suc) != FirstNode);
+
             /* Compute a minimum 1-tree in the sparse graph */
             W = Minimum1TreeCost(1);
+
             /* Test if an improvement has been found */
             if (W > BestW || (W == BestW && Norm < BestNorm)) {
                 /* If the lower bound becomes greater than twice its
@@ -136,11 +140,13 @@ GainType Ascent()
                 }
                 BestW = W;
                 BestNorm = Norm;
+
                 /* Update the BestPi-values */
                 t = FirstNode;
                 do
                     t->BestPi = t->Pi;
                 while ((t = t->Suc) != FirstNode);
+
                 if (TraceLevel >= 2)
                     printff
                         ("* T = %d, Period = %d, P = %d, "
@@ -150,7 +156,8 @@ GainType Ascent()
                 /* If in the initial phase, the step size is doubled */
                 if (InitialPhase && T * sqrt((double) Norm) > 0)
                     T *= 2;
-                /* If the improvement was found at the last iteration of the 
+
+                /* If the improvement was found at the last iteration of the
                    current period, then double the period */
                 if (CandidateSetType != DELAUNAY &&
                     CandidateSetType != POPMUSIC &&
@@ -178,10 +185,10 @@ GainType Ascent()
     } while ((t = t->Suc) != FirstNode);
 
     /* Compute a minimum 1-tree */
-    W = BestW = Minimum1TreeCost(CandidateSetType == DELAUNAY ||
-                                 CandidateSetType == POPMUSIC ||
-                                 MaxCandidates == 0);
+    W = BestW = Minimum1TreeCost(CandidateSetType == DELAUNAY || CandidateSetType == POPMUSIC || MaxCandidates == 0);
 
+
+    /* Setting Cost To Each Candidate Edge*/
     if (MaxCandidates > 0 && CandidateSetType != POPMUSIC) {
         FreeCandidateSets();
         if (CandidateSetType == DELAUNAY)
@@ -195,6 +202,8 @@ GainType Ascent()
         }
         while ((t = t->Suc) != FirstNode);
     }
+
+
     if (TraceLevel >= 2)
         printff("Ascent: BestW = %0.1f, Norm = %d\n",
                 (double) BestW / Precision, Norm);

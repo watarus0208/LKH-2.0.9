@@ -23,32 +23,42 @@ void CreateCandidateSet()
     double EntryTime = GetTime();
 
     Norm = 9999;
+
+    /*Making C Array*/
     if (C == C_EXPLICIT) {
         Na = FirstNode;
         do {
-            for (i = 1; i < Na->Id; i++)
+            /*Maltipile 100*/
+            for (i = 1; i < Na->Id; i++){
                 Na->C[i] *= Precision;
+            }
         }
         while ((Na = Na->Suc) != FirstNode);
     }
+
+    /*Distance : Distance_EUC_2D*/
+    /*MaxTrials: 2392*/
     if (Distance == Distance_1 ||
         (MaxTrials == 0 &&
-         (FirstNode->InitialSuc || InitialTourAlgorithm == SIERPINSKI ||
-          InitialTourAlgorithm == MOORE))) {
-        CandidatesRead = ReadCandidates(MaxCandidates) ||
-            ReadEdges(MaxCandidates);
+         (FirstNode->InitialSuc || InitialTourAlgorithm == SIERPINSKI || InitialTourAlgorithm == MOORE)
+         )){
+        CandidatesRead = ReadCandidates(MaxCandidates) || ReadEdges(MaxCandidates);
         AddTourCandidates();
+
         if (ProblemType == HCP || ProblemType == HPP)
             Ascent();
         goto End_CreateCandidateSet;
     }
+
     if (TraceLevel >= 2)
         printff("Creating candidates ...\n");
+
+    /*In ReadParameters.c MaxCandidates's default value is 5*/
+    /*In ReadParameters.c CandidateSetType's default value is ALPHA*/
     if (MaxCandidates > 0 &&
         (CandidateSetType == QUADRANT || CandidateSetType == NN)) {
         ReadPenalties();
-        if (!(CandidatesRead = ReadCandidates(MaxCandidates) ||
-              ReadEdges(MaxCandidates)) && MaxCandidates > 0) {
+        if (!(CandidatesRead = ReadCandidates(MaxCandidates) || ReadEdges(MaxCandidates)) && MaxCandidates > 0) {
             if (CandidateSetType == QUADRANT)
                 CreateQuadrantCandidateSet(MaxCandidates);
             else if (CandidateSetType == NN) {
@@ -66,29 +76,35 @@ void CreateCandidateSet()
             SymmetrizeCandidateSet();
         goto End_CreateCandidateSet;
     }
+
+    /*No PiFile*/
     if (!ReadPenalties()) {
         /* No PiFile specified or available */
         Na = FirstNode;
         do
             Na->Pi = 0;
         while ((Na = Na->Suc) != FirstNode);
+        /*MaxCandidates is default 5*/
+        /*ReadCandidates is read candidates from files*/
         CandidatesRead = ReadCandidates(MaxCandidates) ||
             ReadEdges(MaxCandidates);
+
         Cost = Ascent();
         if (Subgradient && SubproblemSize == 0) {
             WritePenalties();
             PiFile = 0;
         }
-    } else if ((CandidatesRead = ReadCandidates(MaxCandidates) ||
-                ReadEdges(MaxCandidates)) || MaxCandidates == 0) {
+
+    /*Not Selected*/
+    } else if ((CandidatesRead = ReadCandidates(MaxCandidates) || ReadEdges(MaxCandidates)) || MaxCandidates == 0) {
         AddTourCandidates();
         if (CandidateSetSymmetric)
             SymmetrizeCandidateSet();
         goto End_CreateCandidateSet;
+
+    /*Not Selected*/
     } else {
-        if (CandidateSetType != DELAUNAY &&
-            CandidateSetType != POPMUSIC &&
-            MaxCandidates > 0) {
+        if (CandidateSetType != DELAUNAY && CandidateSetType != POPMUSIC && MaxCandidates > 0) {
             if (TraceLevel >= 2)
                 printff("Computing lower bound ... ");
             Cost = Minimum1TreeCost(0);
@@ -118,6 +134,7 @@ void CreateCandidateSet()
             while ((Na = Na->Suc) != FirstNode);
         }
     }
+
     LowerBound = (double) Cost / Precision;
     if (TraceLevel >= 1) {
         printff("Lower bound = %0.1f", LowerBound);
@@ -129,21 +146,18 @@ void CreateCandidateSet()
                     fabs(GetTime() - EntryTime));
         printff("\n");
     }
+
     MaxAlpha = (GainType) fabs(Excess * Cost);
     if ((A = Optimum * Precision - Cost) > 0 && A < MaxAlpha)
         MaxAlpha = A;
-    if (CandidateSetType == DELAUNAY ||
-        CandidateSetType == POPMUSIC ||
-        MaxCandidates == 0)
+    if (CandidateSetType == DELAUNAY || CandidateSetType == POPMUSIC || MaxCandidates == 0)
         OrderCandidateSet(MaxCandidates, MaxAlpha, CandidateSetSymmetric);
     else
         GenerateCandidates(MaxCandidates, MaxAlpha, CandidateSetSymmetric);
 
   End_CreateCandidateSet:
     if (ExtraCandidates > 0) {
-        AddExtraCandidates(ExtraCandidates,
-                           ExtraCandidateSetType,
-                           ExtraCandidateSetSymmetric);
+        AddExtraCandidates(ExtraCandidates,ExtraCandidateSetType,ExtraCandidateSetSymmetric);
         AddTourCandidates();
     }
     ResetCandidateSet();

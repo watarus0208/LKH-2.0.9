@@ -22,11 +22,13 @@ GainType Minimum1TreeCost(int Sparse)
 
     MinimumSpanningTree(Sparse);
     N = FirstNode;
+
     do {
         N->V = -2;
         Sum += N->Pi;
     }
     while ((N = N->Suc) != FirstNode);
+
     Sum *= -2;
     while ((N = N->Suc) != FirstNode) {
         N->V++;
@@ -36,6 +38,7 @@ GainType Minimum1TreeCost(int Sparse)
     }
     FirstNode->Dad = FirstNode->Suc;
     FirstNode->Cost = FirstNode->Suc->Cost;
+
     do {
         if (N->V == -1) {
             Connect(N, Max, Sparse);
@@ -46,6 +49,7 @@ GainType Minimum1TreeCost(int Sparse)
         }
     }
     while ((N = N->Suc) != FirstNode);
+
     assert(N1);
     N1->Next->V++;
     N1->V++;
